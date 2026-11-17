@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Studio - Dashboard</title>
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        #bg-video { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; object-fit: cover; z-index: -1; filter: brightness(0.3); }
+        
+        .dashboard-card { background: rgba(20, 20, 20, 0.75); backdrop-filter: blur(20px); border: 1px solid rgba(0, 210, 255, 0.3); padding: 40px; border-radius: 20px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.6); max-width: 750px; width: 90%; }
+        h1 { color: #00d2ff; text-shadow: 0 0 20px rgba(0,210,255,0.6); margin-bottom: 10px; font-size: 32px; }
+        p { color: #bbb; font-size: 14px; margin-bottom: 35px; }
+        
+        /* 🔥 Three Equal Tabs Layout */
+        .tabs-container { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+        .studio-tab { flex: 1; min-width: 190px; padding: 20px 15px; border-radius: 12px; text-align: center; text-decoration: none; font-weight: bold; font-size: 15px; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.1); }
+        .studio-tab span { font-size: 24px; }
+        
+        /* Tab 1: AI Story */
+        .tab-story { background: linear-gradient(135deg, rgba(31,64,55,0.8), rgba(153,242,200,0.2)); color: #99f2c8; border-color: rgba(153,242,200,0.3); }
+        .tab-story:hover { transform: translateY(-5px); box-shadow: 0 0 20px rgba(153,242,200,0.5); background: linear-gradient(135deg, rgba(31,64,55,1), rgba(153,242,200,0.4)); color: #fff; }
+
+        /* Tab 2: Auto Timeline */
+        .tab-timeline { background: linear-gradient(135deg, rgba(0,120,215,0.4), rgba(0,210,255,0.2)); color: #00d2ff; border-color: rgba(0,210,255,0.3); }
+        .tab-timeline:hover { transform: translateY(-5px); box-shadow: 0 0 20px rgba(0,210,255,0.5); background: linear-gradient(135deg, rgba(0,120,215,0.8), rgba(0,210,255,0.4)); color: #fff; }
+
+        /* Tab 3: Image to Video */
+        .tab-img { background: linear-gradient(135deg, rgba(200,50,20,0.6), rgba(245,175,25,0.2)); color: #f5af19; border-color: rgba(245,175,25,0.3); }
+        .tab-img:hover { transform: translateY(-5px); box-shadow: 0 0 20px rgba(245,175,25,0.5); background: linear-gradient(135deg, rgba(200,50,20,0.9), rgba(245,175,25,0.4)); color: #fff; }
+    </style>
+</head>
+<body>
+
+    <video autoplay muted loop playsinline id="bg-video">
+        <source src="bg_network.mp4" type="video/mp4">
+    </video>
+
+    <div class="dashboard-card">
+        <h1>🎬 AI Video Studio</h1>
+        <p>Welcome to your personal cinematic storytelling engine.</p>
+        
+        <div class="tabs-container">
+            <!-- Tab 1 -->
+            <a href="/story_generator" class="studio-tab tab-story">
+                <span>✨</span>
+                AI Story & Script
+            </a>
+            
+            <!-- Tab 2 -->
+            <a href="/auto_editor" class="studio-tab tab-timeline">
+                <span>🎞️</span>
+                Auto Timeline Editor
+            </a>
+            
+            <!-- Tab 3 -->
+            <a href="/image_to_video" class="studio-tab tab-img">
+                <span>🖼️</span>
+                Image to Video
+            </a><!-- Tab 4 -->
+            <!-- Tab 4 -->
+            <style>
+                .tab-trimmer {
+                    background: linear-gradient(135deg, #1f132b, #13151f);
+                    border: 1px solid rgba(170, 85, 255, 0.3);
+                    color: #d4a5ff;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 25px 15px;
+                    border-radius: 12px;
+                    text-decoration: none;
+                    font-weight: bold;
+                    font-size: 16px;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+                }
+                .tab-trimmer:hover {
+                    transform: translateY(-8px);
+                    box-shadow: 0 12px 25px rgba(170, 85, 255, 0.35);
+                    border-color: rgba(170, 85, 255, 0.8);
+                }
+            </style>
+            <a href="/trimmer" class="studio-tab tab-trimmer">
+                <span style="font-size: 32px; margin-bottom: 12px;">✂️</span>
+                Media Trimmer
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>

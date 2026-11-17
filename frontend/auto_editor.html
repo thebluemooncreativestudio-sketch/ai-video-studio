@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Studio - Timeline Editor</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            padding: 25px;
+        }
+        .studio-wrap {
+            max-width: 1140px;
+            margin: auto;
+            background: rgba(18, 20, 28, 0.94);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.7);
+        }
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            margin: 0;
+            color: #00d2ff;
+            font-size: 26px;
+        }
+        .nav-link {
+            color: #99f2c8;
+            text-decoration: none;
+            font-weight: bold;
+            border: 1px solid rgba(153, 242, 200, 0.35);
+            padding: 8px 14px;
+            border-radius: 8px;
+        }
+        .upload-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+        .upload-box {
+            background: #131722;
+            border: 1px dashed rgba(0, 210, 255, 0.45);
+            border-radius: 12px;
+            padding: 15px;
+        }
+        .upload-box label {
+            display: block;
+            font-weight: bold;
+            color: #00d2ff;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .upload-box input[type="file"] {
+            width: 100%;
+            color: #ddd;
+            font-size: 13px;
+        }
+        .panel-box {
+            background: #0d1017;
+            border: 1px solid #262d3d;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+        .panel-box h3 {
+            margin: 0 0 12px;
+            color: #00d2ff;
+            font-size: 16px;
+        }
+        .preview-layout {
+            display: grid;
+            grid-template-columns: minmax(260px, 440px) 1fr;
+            gap: 18px;
+            align-items: start;
+        }
+        @media (max-width: 820px) {
+            .preview-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        .preview-frame-outer {
+            background: #141925;
+            border: 1px solid #2e3952;
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 220px;
+        }
+        .preview-stage {
+            position: relative;
+            background: #000000;
+            border: 2px solid rgba(0, 210, 255, 0.45);
+            border-radius: 8px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 16 / 9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .preview-stage.ratio-9-16 {
+            max-width: 210px;
+            aspect-ratio: 9 / 16;
+        }
+        .preview-stage.ratio-1-1 {
+            max-width: 300px;
+            aspect-ratio: 1 / 1;
+        }
+        .preview-stage img,
+        .preview-stage video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.4s ease, filter 0.3s ease;
+        }
+        .preview-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(10, 12, 18, 0.82);
+            color: #ffde00;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 222, 0, 0.35);
+        }
+        .preview-controls-col {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .mini-btn {
+            background: #1b2436;
+            color: #ffffff;
+            border: 1px solid #394b70;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .mini-btn:hover {
+            border-color: #00d2ff;
+            color: #00d2ff;
+        }
+        .mini-btn.primary {
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            border: none;
+            color: #ffffff;
+        }
+        .preview-status {
+            background: #141925;
+            border: 1px solid #283248;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 13px;
+            color: #d7e3ff;
+        }
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .track-label {
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 8px;
+            color: #a9b4cc;
+        }
+        .audio-track {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            min-height: 50px;
+            background: #141925;
+            border-radius: 10px;
+            padding: 10px;
+            border-left: 4px solid #99f2c8;
+            margin-bottom: 16px;
+        }
+        .audio-clip {
+            background: rgba(153, 242, 200, 0.14);
+            border: 1px solid rgba(153, 242, 200, 0.4);
+            color: #d7ffec;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .media-track {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            min-height: 120px;
+            background: #141925;
+            border-radius: 10px;
+            padding: 12px;
+            border-left: 4px solid #00d2ff;
+        }
+        .scene-clip {
+            background: #1b2232;
+            border: 1px solid #323e59;
+            border-radius: 10px;
+            padding: 12px;
+            width: 230px;
+            cursor: grab;
+            transition: transform 0.15s ease, border-color 0.15s ease;
+            user-select: none;
+        }
+        .scene-clip.active-scene {
+            border-color: #ffde00;
+            box-shadow: 0 0 0 1px rgba(255, 222, 0, 0.4);
+        }
+        .scene-clip:active {
+            cursor: grabbing;
+        }
+        .scene-clip.dragging {
+            opacity: 0.45;
+            border-color: #f5af19;
+        }
+        .scene-clip.drag-over {
+            border-color: #00d2ff;
+            transform: scale(1.02);
+        }
+        .clip-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #f5af19;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        .clip-name {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 10px;
+            color: #eef3ff;
+        }
+        .control-row {
+            margin-bottom: 8px;
+        }
+        .control-row label {
+            display: block;
+            font-size: 11px;
+            color: #9fb0cc;
+            margin-bottom: 3px;
+        }
+        .control-row input,
+        .control-row select {
+            width: 100%;
+            box-sizing: border-box;
+            background: #0d1017;
+            color: #ffffff;
+            border: 1px solid #38445e;
+            border-radius: 6px;
+            padding: 6px 8px;
+            font-size: 12px;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+            gap: 12px;
+        }
+        .field-box label {
+            display: block;
+            font-size: 12px;
+            color: #99f2c8;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .field-box input,
+        .field-box select {
+            width: 100%;
+            box-sizing: border-box;
+            background: #141925;
+            color: #ffffff;
+            border: 1px solid #38445e;
+            border-radius: 6px;
+            padding: 7px 9px;
+            font-size: 13px;
+        }
+        .manual-sub-box {
+            display: none;
+            margin-top: 12px;
+        }
+        .manual-sub-box label {
+            display: block;
+            font-size: 12px;
+            color: #ffde00;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .manual-sub-box textarea {
+            width: 100%;
+            box-sizing: border-box;
+            background: #141925;
+            color: #ffffff;
+            border: 1px solid #38445e;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 13px;
+        }
+        .render-btn {
+            width: 100%;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            color: #ffffff;
+            border: none;
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .render-btn:hover {
+            filter: brightness(1.08);
+        }
+        .hint {
+            font-size: 12px;
+            color: #8f9bb3;
+        }
+    </style>
+</head>
+<body>
+    <div class="studio-wrap">
+        <div class="top-bar">
+            <h1>Timeline Editor</h1>
+            <a href="/" class="nav-link">Back to Dashboard</a>
+        </div>
+
+        <form id="timelineForm" action="/upload" method="POST" enctype="multipart/form-data">
+            <div class="upload-grid">
+                <div class="upload-box">
+                    <label for="audioInput">Voice / Main Audio Track</label>
+                    <input type="file" id="audioInput" name="audio" accept="audio/*" multiple required>
+                </div>
+                <div class="upload-box">
+                    <label for="mediaInput">Image / Video Clips (Multi-Scene)</label>
+                    <input type="file" id="mediaInput" accept="image/*,video/*" multiple required>
+                </div>
+                <div class="upload-box">
+                    <label for="bgmInput">Background Music (Optional, Multiple)</label>
+                    <input type="file" id="bgmInput" name="bgm_files" accept="audio/*" multiple>
+                </div>
+                <div class="upload-box">
+                    <label for="sfxInput">Sound Effect / SFX (Optional)</label>
+                    <input type="file" id="sfxInput" name="sfx_file" accept="audio/*">
+                </div>
+            </div>
+
+            <div class="panel-box">
+                <h3>Real-Time Timeline Preview</h3>
+                <div class="preview-layout">
+                    <div class="preview-frame-outer">
+                        <div id="previewStage" class="preview-stage">
+                            <span id="previewBadge" class="preview-badge">Scene 0</span>
+                            <span id="previewPlaceholder" class="hint">Select clips & audio to preview</span>
+                        </div>
+                    </div>
+                    <div class="preview-controls-col">
+                        <div class="btn-row">
+                            <button type="button" id="playPreviewBtn" class="mini-btn primary">Play Timeline Preview</button>
+                            <button type="button" id="stopPreviewBtn" class="mini-btn">Stop</button>
+                            <button type="button" id="prevSceneBtn" class="mini-btn">Prev Scene</button>
+                            <button type="button" id="nextSceneBtn" class="mini-btn">Next Scene</button>
+                        </div>
+                        <audio id="previewAudio" controls style="width: 100%;"></audio>
+                        <div id="previewStatus" class="preview-status">
+                            Ready. Preview shows your clip order, aspect ratio frame, effects, and audio sync in real time.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-box">
+                <div class="timeline-header">
+                    <div>
+                        <strong>Multi-Track Timeline (Long Video Ready: 5 / 10 / 15+ Min)</strong>
+                        <span class="hint"> — Drag clips to reorder, set scene duration (sec), and pick clip effect.</span>
+                    </div>
+                    <div id="totalDurationLabel" style="color:#99f2c8; font-weight:bold; font-size:14px;">
+                        Total Custom Duration: Auto (Synced to audio length)
+                    </div>
+                </div>
+
+                <div class="track-label">Audio Timeline</div>
+                <div id="audioTrack" class="audio-track">
+                    <span class="hint">No audio file selected yet.</span>
+                </div>
+
+                <div class="track-label">Image / Video Timeline (Drag & Drop)</div>
+                <div id="mediaTrack" class="media-track">
+                    <span class="hint">Upload images or videos to build your timeline clips.</span>
+                </div>
+            </div>
+
+            <div class="panel-box">
+                <h3>Final Video Export & Format</h3>
+                <div class="options-grid">
+                    <div class="field-box">
+                        <label for="aspectRatio">Aspect Ratio Format</label>
+                        <select name="aspect_ratio" id="aspectRatio" onchange="updatePreviewRatioFrame()">
+                            <option value="16:9" selected>16:9 (YouTube / Landscape)</option>
+                            <option value="9:16">9:16 (Reels / Shorts / Vertical)</option>
+                            <option value="1:1">1:1 (Square)</option>
+                        </select>
+                    </div>
+                    <div class="field-box">
+                        <label for="resolution">Resolution (MP4)</label>
+                        <select name="resolution" id="resolution">
+                            <option value="1080p" selected>1080p (Full HD)</option>
+                            <option value="720p">720p (HD Fast)</option>
+                        </select>
+                    </div>
+                    <div class="field-box">
+                        <label for="maxVideoDuration">Max Video Length (sec, 0 = match audio)</label>
+                        <input type="number" step="1" min="0" name="max_video_duration" id="maxVideoDuration" value="0" placeholder="0 = audio sync">
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-box">
+                <h3>Transition Library (Optional)</h3>
+                <div class="options-grid">
+                    <div class="field-box">
+                        <label for="transitionType">Transition Style</label>
+                        <select name="transition_type" id="transitionType">
+                            <option value="none" selected>Straight Cut (No Transition)</option>
+                            <option value="dissolve">Cross Dissolve</option>
+                            <option value="fadeblack">Fade to Black</option>
+                            <option value="wipeleft">Wipe Left</option>
+                            <option value="wiperight">Wipe Right</option>
+                            <option value="smoothleft">Smooth Cinematic Left</option>
+                            <option value="smoothright">Smooth Cinematic Right</option>
+                            <option value="fade">Smooth Fade</option>
+                        </select>
+                    </div>
+                    <div class="field-box">
+                        <label for="transitionDuration">Transition Duration (sec)</label>
+                        <input type="number" step="0.1" min="0.2" max="2.5" name="transition_duration" id="transitionDuration" value="0.6">
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-box">
+                <h3>Audio Mix, BGM Duration, Volume, Fade & SFX (Optional)</h3>
+                <div class="options-grid">
+                    <div class="field-box">
+                        <label for="bgmDuration">BGM Duration (sec, 0 = full)</label>
+                        <input type="number" step="0.5" min="0" name="bgm_duration" id="bgmDuration" value="0" placeholder="0 = full">
+                    </div>
+                    <div class="field-box">
+                        <label for="bgmStart">BGM Start Time (sec)</label>
+                        <input type="number" step="0.5" min="0" name="bgm_start" id="bgmStart" value="0">
+                    </div>
+                    <div class="field-box">
+                        <label for="voiceVol">Voice Volume (0 - 3)</label>
+                        <input type="number" step="0.1" min="0" max="3" name="voice_vol" id="voiceVol" value="1.0">
+                    </div>
+                    <div class="field-box">
+                        <label for="bgmVol">BGM Volume (0 - 2)</label>
+                        <input type="number" step="0.05" min="0" max="2" name="bgm_vol" id="bgmVol" value="0.25">
+                    </div>
+                    <div class="field-box">
+                        <label for="audioFadeIn">Audio Fade In (sec)</label>
+                        <input type="number" step="0.1" min="0" max="10" name="audio_fade_in" id="audioFadeIn" value="0">
+                    </div>
+                    <div class="field-box">
+                        <label for="audioFadeOut">Audio Fade Out (sec)</label>
+                        <input type="number" step="0.1" min="0" max="10" name="audio_fade_out" id="audioFadeOut" value="0">
+                    </div>
+                    <div class="field-box">
+                        <label for="sfxStart">SFX Start Time (sec)</label>
+                        <input type="number" step="0.1" min="0" name="sfx_start" id="sfxStart" value="0">
+                    </div>
+                    <div class="field-box">
+                        <label for="sfxVol">SFX Volume (0 - 3)</label>
+                        <input type="number" step="0.1" min="0" max="3" name="sfx_vol" id="sfxVol" value="0.8">
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-box">
+                <h3>Subtitles (Optional)</h3>
+                <div class="options-grid">
+                    <div class="field-box">
+                        <label for="subtitleMode">Subtitle Mode</label>
+                        <select name="subtitle_mode" id="subtitleMode" onchange="toggleSubtitleFields()">
+                            <option value="off" selected>Off (No Subtitles)</option>
+                            <option value="auto">Auto Generate (From Audio)</option>
+                            <option value="manual">Custom Text / Timing</option>
+                        </select>
+                    </div>
+
+                    <div class="field-box">
+                        <label for="subtitleLang">Language</label>
+                        <select name="subtitle_lang" id="subtitleLang">
+                            <option value="bn">Bengali</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+
+                    <div class="field-box">
+                        <label for="subtitleFont">Font Family</label>
+                        <select name="subtitle_font" id="subtitleFont">
+                            <option value="Arial">Arial</option>
+                            <option value="Noto Sans Bengali">Noto Sans Bengali</option>
+                            <option value="DejaVu Sans">DejaVu Sans</option>
+                        </select>
+                    </div>
+
+                    <div class="field-box">
+                        <label for="subtitleSize">Font Size</label>
+                        <input type="number" name="subtitle_size" id="subtitleSize" min="14" max="72" value="28">
+                    </div>
+
+                    <div class="field-box">
+                        <label for="subtitleColor">Text Colour</label>
+                        <input type="color" name="subtitle_color" id="subtitleColor" value="#ffffff" style="height: 36px; padding: 2px;">
+                    </div>
+
+                    <div class="field-box">
+                        <label for="subtitleOffset">Timing Shift (sec)</label>
+                        <input type="number" step="0.1" name="subtitle_offset" id="subtitleOffset" value="0">
+                    </div>
+                </div>
+
+                <div id="manualSubBox" class="manual-sub-box">
+                    <label for="customSubtitles">Custom Lines (Format per line: start_sec|end_sec|text)</label>
+                    <textarea name="custom_subtitles" id="customSubtitles" rows="4" placeholder="0|3.5|Ami ekta notun golpo bolchi&#10;3.5|7.0|Aajker diner sesh drishyo"></textarea>
+                </div>
+            </div>
+
+            <button type="submit" class="render-btn">Generate Final MP4 Video</button>
+        </form>
+    </div>
+
+    <script>
+        const audioInput = document.getElementById('audioInput');
+        const mediaInput = document.getElementById('mediaInput');
+        const bgmInput = document.getElementById('bgmInput');
+        const sfxInput = document.getElementById('sfxInput');
+        const audioTrack = document.getElementById('audioTrack');
+        const mediaTrack = document.getElementById('mediaTrack');
+        const totalDurationLabel = document.getElementById('totalDurationLabel');
+        const timelineForm = document.getElementById('timelineForm');
+
+        const aspectRatioSelect = document.getElementById('aspectRatio');
+        const previewStage = document.getElementById('previewStage');
+        const previewBadge = document.getElementById('previewBadge');
+        const previewAudio = document.getElementById('previewAudio');
+        const previewStatus = document.getElementById('previewStatus');
+        const playPreviewBtn = document.getElementById('playPreviewBtn');
+        const stopPreviewBtn = document.getElementById('stopPreviewBtn');
+        const prevSceneBtn = document.getElementById('prevSceneBtn');
+        const nextSceneBtn = document.getElementById('nextSceneBtn');
+
+        let timelineClips = [];
+        let draggedIndex = null;
+        let activePreviewIndex = 0;
+        let previewTimer = null;
+        let audioObjectUrls = [];
+        let audioQueueIndex = 0;
+        let isPreviewPlaying = false;
+
+        function toggleSubtitleFields() {
+            const mode = document.getElementById('subtitleMode').value;
+            document.getElementById('manualSubBox').style.display = (mode === 'manual') ? 'block' : 'none';
+        }
+
+        function updatePreviewRatioFrame() {
+            const ratio = aspectRatioSelect.value;
+            previewStage.classList.remove('ratio-9-16', 'ratio-1-1');
+            if (ratio === '9:16') {
+                previewStage.classList.add('ratio-9-16');
+            } else if (ratio === '1:1') {
+                previewStage.classList.add('ratio-1-1');
+            }
+        }
+
+        function clearAudioUrls() {
+            audioObjectUrls.forEach(u => URL.revokeObjectURL(u));
+            audioObjectUrls = [];
+        }
+
+        function setupPreviewAudioQueue() {
+            clearAudioUrls();
+            audioQueueIndex = 0;
+            const files = Array.from(audioInput.files || []);
+            if (!files.length) {
+                previewAudio.removeAttribute('src');
+                previewAudio.load();
+                return;
+            }
+            audioObjectUrls = files.map(f => URL.createObjectURL(f));
+            previewAudio.src = audioObjectUrls[0];
+        }
+
+        previewAudio.addEventListener('ended', () => {
+            if (isPreviewPlaying && audioQueueIndex + 1 < audioObjectUrls.length) {
+                audioQueueIndex += 1;
+                previewAudio.src = audioObjectUrls[audioQueueIndex];
+                previewAudio.play().catch(() => {});
+            }
+        });
+
+        function getEffectPreviewStyle(effect) {
+            if (effect === 'bw') return { transform: 'scale(1)', filter: 'grayscale(100%)' };
+            if (effect === 'blur') return { transform: 'scale(1.06)', filter: 'blur(3px)' };
+            if (effect === 'zoom_in') return { transform: 'scale(1.12)', filter: 'none' };
+            if (effect === 'zoom_out') return { transform: 'scale(1.0)', filter: 'none' };
+            if (effect === 'pan_left') return { transform: 'scale(1.1) translateX(-12px)', filter: 'none' };
+            if (effect === 'pan_right') return { transform: 'scale(1.1) translateX(12px)', filter: 'none' };
+            return { transform: 'scale(1.05)', filter: 'none' };
+        }
+
+        function highlightActiveClipCard(idx) {
+            document.querySelectorAll('.scene-clip').forEach((el, i) => {
+                el.classList.toggle('active-scene', i === idx);
+            });
+        }
+
+        function showSceneInPreview(idx) {
+            if (!timelineClips.length) {
+                previewStage.innerHTML = '<span id="previewBadge" class="preview-badge">Scene 0</span><span class="hint">Select clips & audio to preview</span>';
+                previewStatus.textContent = 'No clips loaded for preview.';
+                return;
+            }
+            activePreviewIndex = Math.max(0, Math.min(idx, timelineClips.length - 1));
+            const clip = timelineClips[activePreviewIndex];
+            const effStyle = getEffectPreviewStyle(clip.transition);
+
+            previewStage.innerHTML = '';
+            const badge = document.createElement('span');
+            badge.className = 'preview-badge';
+            badge.textContent = `Scene ${activePreviewIndex + 1}/${timelineClips.length} (${aspectRatioSelect.value})`;
+            previewStage.appendChild(badge);
+
+            if (clip.type === 'Video') {
+                const vid = document.createElement('video');
+                vid.src = clip.url;
+                vid.muted = true;
+                vid.loop = true;
+                vid.playsInline = true;
+                vid.style.transform = effStyle.transform;
+                vid.style.filter = effStyle.filter;
+                previewStage.appendChild(vid);
+                vid.play().catch(() => {});
+            } else {
+                const img = document.createElement('img');
+                img.src = clip.url;
+                img.alt = clip.file.name;
+                img.style.transform = effStyle.transform;
+                img.style.filter = effStyle.filter;
+                previewStage.appendChild(img);
+            }
+
+            const durLabel = clip.duration && parseFloat(clip.duration) > 0 ? `${parseFloat(clip.duration).toFixed(1)}s` : 'Auto';
+            previewStatus.textContent = `Previewing #${activePreviewIndex + 1}: ${clip.file.name} | Effect: ${clip.transition} | Duration: ${durLabel}`;
+            highlightActiveClipCard(activePreviewIndex);
+        }
+
+        function stopTimelinePreview() {
+            isPreviewPlaying = false;
+            if (previewTimer) {
+                clearTimeout(previewTimer);
+                previewTimer = null;
+            }
+            previewAudio.pause();
+            highlightActiveClipCard(-1);
+        }
+
+        function stepPreviewLoop(idx) {
+            if (!isPreviewPlaying) return;
+            if (idx >= timelineClips.length) {
+                stopTimelinePreview();
+                previewStatus.textContent = 'Timeline preview finished.';
+                return;
+            }
+            showSceneInPreview(idx);
+            const clip = timelineClips[idx];
+            const stepSec = (clip.duration && parseFloat(clip.duration) > 0) ? parseFloat(clip.duration) : 4.0;
+            previewTimer = setTimeout(() => {
+                stepPreviewLoop(idx + 1);
+            }, stepSec * 1000);
+        }
+
+        playPreviewBtn.addEventListener('click', () => {
+            if (!timelineClips.length) {
+                alert('Age image ba video clips select koro.');
+                return;
+            }
+            stopTimelinePreview();
+            isPreviewPlaying = true;
+            if (audioObjectUrls.length) {
+                audioQueueIndex = 0;
+                previewAudio.currentTime = 0;
+                previewAudio.src = audioObjectUrls[0];
+                previewAudio.play().catch(() => {});
+            }
+            stepPreviewLoop(activePreviewIndex);
+        });
+
+        stopPreviewBtn.addEventListener('click', () => {
+            stopTimelinePreview();
+            previewStatus.textContent = 'Preview stopped.';
+        });
+
+        prevSceneBtn.addEventListener('click', () => {
+            stopTimelinePreview();
+            showSceneInPreview(activePreviewIndex - 1);
+        });
+
+        nextSceneBtn.addEventListener('click', () => {
+            stopTimelinePreview();
+            showSceneInPreview(activePreviewIndex + 1);
+        });
+
+        function renderAudioTrackSummary() {
+            audioTrack.innerHTML = '';
+            const files = Array.from(audioInput.files || []);
+            const bgmFiles = Array.from(bgmInput.files || []);
+            const sfxFile = sfxInput.files && sfxInput.files[0] ? sfxInput.files[0] : null;
+
+            if (!files.length && !bgmFiles.length && !sfxFile) {
+                audioTrack.innerHTML = '<span class="hint">No audio file selected yet.</span>';
+                return;
+            }
+
+            files.forEach((file, i) => {
+                const block = document.createElement('div');
+                block.className = 'audio-clip';
+                block.textContent = `Voice ${i + 1}: ${file.name}`;
+                audioTrack.appendChild(block);
+            });
+
+            bgmFiles.forEach((file, i) => {
+                const bgmBlock = document.createElement('div');
+                bgmBlock.className = 'audio-clip';
+                bgmBlock.style.borderColor = 'rgba(0, 210, 255, 0.5)';
+                bgmBlock.style.color = '#b8f3ff';
+                bgmBlock.textContent = `BGM ${i + 1}: ${file.name}`;
+                audioTrack.appendChild(bgmBlock);
+            });
+
+            if (sfxFile) {
+                const sfxBlock = document.createElement('div');
+                sfxBlock.className = 'audio-clip';
+                sfxBlock.style.borderColor = 'rgba(255, 222, 0, 0.5)';
+                sfxBlock.style.color = '#fff2a6';
+                sfxBlock.textContent = `SFX: ${sfxFile.name}`;
+                audioTrack.appendChild(sfxBlock);
+            }
+        }
+
+        audioInput.addEventListener('change', () => {
+            renderAudioTrackSummary();
+            setupPreviewAudioQueue();
+        });
+        bgmInput.addEventListener('change', renderAudioTrackSummary);
+        sfxInput.addEventListener('change', renderAudioTrackSummary);
+
+        mediaInput.addEventListener('change', () => {
+            stopTimelinePreview();
+            timelineClips.forEach(c => {
+                if (c.url) URL.revokeObjectURL(c.url);
+            });
+            const files = Array.from(mediaInput.files || []);
+            timelineClips = files.map((file, index) => ({
+                uid: `${Date.now()}_${index}_${file.name}`,
+                file: file,
+                url: URL.createObjectURL(file),
+                type: file.type.startsWith('video/') ? 'Video' : 'Image',
+                duration: '',
+                transition: 'auto'
+            }));
+            activePreviewIndex = 0;
+            renderMediaTimeline();
+            showSceneInPreview(0);
+        });
+
+        function formatSecondsReadable(sec) {
+            const total = Math.max(0, Math.round(sec));
+            const mins = Math.floor(total / 60);
+            const rem = total % 60;
+            return mins > 0 ? `${mins}m ${rem}s (${sec.toFixed(1)}s)` : `${sec.toFixed(1)}s`;
+        }
+
+        function updateTotalDurationText() {
+            let sum = 0;
+            let hasCustom = false;
+            timelineClips.forEach(clip => {
+                const val = parseFloat(clip.duration);
+                if (!isNaN(val) && val > 0) {
+                    sum += val;
+                    hasCustom = true;
+                }
+            });
+            totalDurationLabel.textContent = hasCustom
+                ? `Custom Scene Sum: ${formatSecondsReadable(sum)} (Synced with audio)`
+                : 'Total Custom Duration: Auto (Synced to audio length)';
+        }
+
+        function renderMediaTimeline() {
+            mediaTrack.innerHTML = '';
+            if (!timelineClips.length) {
+                mediaTrack.innerHTML = '<span class="hint">Upload images or videos to build your timeline clips.</span>';
+                updateTotalDurationText();
+                return;
+            }
+
+            timelineClips.forEach((clip, idx) => {
+                const card = document.createElement('div');
+                card.className = 'scene-clip';
+                card.draggable = true;
+                card.dataset.index = idx;
+
+                const widthPx = clip.duration && parseFloat(clip.duration) > 0
+                    ? Math.min(380, Math.max(200, 180 + parseFloat(clip.duration) * 12))
+                    : 230;
+                card.style.width = `${widthPx}px`;
+
+                card.innerHTML = `
+                    <div class="clip-top">
+                        <span>#${idx + 1} ${clip.type}</span>
+                        <span>⋮⋮</span>
+                    </div>
+                    <div class="clip-name" title="${clip.file.name}">${clip.file.name}</div>
+                    <div class="control-row">
+                        <label>Duration (sec, blank = auto)</label>
+                        <input type="number" step="0.5" min="0.5" placeholder="Auto" value="${clip.duration}" data-role="duration">
+                    </div>
+                    <div class="control-row" style="margin-bottom:0;">
+                        <label>Clip Effect</label>
+                        <select data-role="transition">
+                            <option value="auto" ${clip.transition === 'auto' ? 'selected' : ''}>Auto Ken Burns (Mix)</option>
+                            <option value="zoom_in" ${clip.transition === 'zoom_in' ? 'selected' : ''}>Slow Zoom In</option>
+                            <option value="zoom_out" ${clip.transition === 'zoom_out' ? 'selected' : ''}>Slow Zoom Out</option>
+                            <option value="pan_left" ${clip.transition === 'pan_left' ? 'selected' : ''}>Pan Left (Cinematic)</option>
+                            <option value="pan_right" ${clip.transition === 'pan_right' ? 'selected' : ''}>Pan Right (Cinematic)</option>
+                            <option value="fade_in_out" ${clip.transition === 'fade_in_out' ? 'selected' : ''}>Fade In & Out</option>
+                            <option value="blur" ${clip.transition === 'blur' ? 'selected' : ''}>Blur / Motion</option>
+                            <option value="bw" ${clip.transition === 'bw' ? 'selected' : ''}>Black & White</option>
+                        </select>
+                    </div>
+                `;
+
+                card.addEventListener('click', (e) => {
+                    if (['INPUT', 'SELECT'].includes(e.target.tagName)) return;
+                    stopTimelinePreview();
+                    showSceneInPreview(idx);
+                });
+
+                const durInput = card.querySelector('[data-role="duration"]');
+                durInput.addEventListener('input', (e) => {
+                    timelineClips[idx].duration = e.target.value;
+                    updateTotalDurationText();
+                    const dVal = parseFloat(e.target.value);
+                    const nextW = !isNaN(dVal) && dVal > 0
+                        ? Math.min(380, Math.max(200, 180 + dVal * 12))
+                        : 230;
+                    card.style.width = `${nextW}px`;
+                });
+
+                const transSelect = card.querySelector('[data-role="transition"]');
+                transSelect.addEventListener('change', (e) => {
+                    timelineClips[idx].transition = e.target.value;
+                    if (activePreviewIndex === idx) {
+                        showSceneInPreview(idx);
+                    }
+                });
+
+                card.addEventListener('dragstart', () => {
+                    draggedIndex = idx;
+                    card.classList.add('dragging');
+                });
+
+                card.addEventListener('dragend', () => {
+                    draggedIndex = null;
+                    card.classList.remove('dragging');
+                    document.querySelectorAll('.scene-clip').forEach(el => el.classList.remove('drag-over'));
+                });
+
+                card.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    if (draggedIndex !== null && draggedIndex !== idx) {
+                        card.classList.add('drag-over');
+                    }
+                });
+
+                card.addEventListener('dragleave', () => {
+                    card.classList.remove('drag-over');
+                });
+
+                card.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    card.classList.remove('drag-over');
+                    if (draggedIndex === null || draggedIndex === idx) return;
+
+                    const [movedItem] = timelineClips.splice(draggedIndex, 1);
+                    timelineClips.splice(idx, 0, movedItem);
+                    draggedIndex = null;
+                    renderMediaTimeline();
+                    showSceneInPreview(idx);
+                });
+
+                mediaTrack.appendChild(card);
+            });
+
+            updateTotalDurationText();
+        }
+
+        timelineForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            stopTimelinePreview();
+
+            const audioFiles = Array.from(audioInput.files || []);
+            if (!audioFiles.length) {
+                alert('Audio file select koro.');
+                return;
+            }
+            if (!timelineClips.length) {
+                alert('At least ekta image ba video timeline-e add koro.');
+                return;
+            }
+
+            const formData = new FormData();
+            audioFiles.forEach(af => formData.append('audio', af));
+
+            const bgmFiles = Array.from(bgmInput.files || []);
+            bgmFiles.forEach(bf => formData.append('bgm_files', bf));
+
+            if (sfxInput.files && sfxInput.files[0]) {
+                formData.append('sfx_file', sfxInput.files[0]);
+            }
+
+            timelineClips.forEach((clip, idx) => {
+                formData.append('media_files', clip.file);
+                if (clip.duration && parseFloat(clip.duration) > 0) {
+                    formData.append(`duration_${idx}`, clip.duration);
+                }
+                formData.append(`effect_${idx}`, clip.transition || 'auto');
+            });
+
+            formData.append('aspect_ratio', document.getElementById('aspectRatio').value);
+            formData.append('resolution', document.getElementById('resolution').value);
+            formData.append('max_video_duration', document.getElementById('maxVideoDuration').value);
+
+            formData.append('transition_type', document.getElementById('transitionType').value);
+            formData.append('transition_duration', document.getElementById('transitionDuration').value);
+
+            formData.append('bgm_duration', document.getElementById('bgmDuration').value);
+            formData.append('bgm_start', document.getElementById('bgmStart').value);
+            formData.append('voice_vol', document.getElementById('voiceVol').value);
+            formData.append('bgm_vol', document.getElementById('bgmVol').value);
+            formData.append('audio_fade_in', document.getElementById('audioFadeIn').value);
+            formData.append('audio_fade_out', document.getElementById('audioFadeOut').value);
+            formData.append('sfx_start', document.getElementById('sfxStart').value);
+            formData.append('sfx_vol', document.getElementById('sfxVol').value);
+
+            formData.append('subtitle_mode', document.getElementById('subtitleMode').value);
+            formData.append('subtitle_lang', document.getElementById('subtitleLang').value);
+            formData.append('subtitle_font', document.getElementById('subtitleFont').value);
+            formData.append('subtitle_size', document.getElementById('subtitleSize').value);
+            formData.append('subtitle_color', document.getElementById('subtitleColor').value);
+            formData.append('subtitle_offset', document.getElementById('subtitleOffset').value);
+            formData.append('custom_subtitles', document.getElementById('customSubtitles').value);
+
+            const btn = timelineForm.querySelector('.render-btn');
+            const oldText = btn.textContent;
+            btn.textContent = 'Rendering Final MP4... (Long videos may take a few minutes)';
+            btn.disabled = true;
+
+            try {
+                const resp = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const html = await resp.text();
+                document.open();
+                document.write(html);
+                document.close();
+            } catch (err) {
+                alert('Video render korar somoy error hoyeche: ' + err.message);
+                btn.textContent = oldText;
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

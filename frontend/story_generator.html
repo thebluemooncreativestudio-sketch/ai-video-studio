@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Studio - AI Story & Script Generator</title>
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0a; color: white; padding: 30px; }
+        .container { max-width: 900px; margin: auto; background: rgba(20, 20, 20, 0.85); backdrop-filter: blur(15px); padding: 30px; border-radius: 15px; border: 1px solid rgba(0, 210, 255, 0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
+        h1 { color: #00d2ff; text-align: center; text-shadow: 0 0 15px rgba(0,210,255,0.5); }
+        .input-group { margin-bottom: 20px; }
+        textarea { width: 100%; height: 100px; background: #111; border: 1px solid #444; color: white; padding: 12px; border-radius: 8px; font-size: 15px; resize: none; outline: none; box-sizing: border-box; }
+        textarea:focus { border-color: #00d2ff; }
+        .generate-btn { background: linear-gradient(90deg, #00d2ff, #3a7bd5); color: white; border: none; padding: 12px 25px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; transition: 0.3s; box-shadow: 0 0 15px rgba(0, 210, 255, 0.4); }
+        .generate-btn:hover { transform: scale(1.01); box-shadow: 0 0 25px rgba(0, 210, 255, 0.7); }
+        
+        .results-section { margin-top: 30px; display: none; }
+        .scene-box { background: rgba(0, 0, 0, 0.6); border: 1px solid #333; border-radius: 8px; padding: 15px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px; }
+        .scene-title { color: #f5af19; font-weight: bold; font-size: 14px; }
+        .scene-text { font-size: 13px; color: #ccc; }
+        .send-to-timeline { background: #1f4037; color: #99f2c8; border: 1px solid #99f2c8; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; align-self: flex-end; transition: 0.2s; }
+        .send-to-timeline:hover { background: #99f2c8; color: #000; }
+        .back-link { display: block; text-align: center; margin-top: 20px; color: #aaa; text-decoration: none; }
+        .back-link:hover { color: #00d2ff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ AI Story & Script Generator</h1>
+        <p style="text-align: center; color: #aaa; font-size: 14px;">Enter a core theme or text to automatically generate a script and scene breakdown.</p>
+        
+        <div class="input-group">
+            <textarea id="story-prompt" placeholder="E.g., Write a motivational story about an old artisan finding new hope..."></textarea>
+        </div>
+        <button class="generate-btn" onclick="generateScript()">⚡ Generate Story & Scene Breakdown</button>
+
+        <div class="results-section" id="results-section">
+            <h3 style="color: #00d2ff; border-bottom: 1px solid #333; padding-bottom: 8px;">🎬 Generated Scene Breakdown</h3>
+            <div id="scenes-container"></div>
+            <button class="generate-btn" style="background: linear-gradient(90deg, #1f4037, #99f2c8); color: #000; margin-top: 15px;" onclick="importToTimeline()">🚀 Export All Scenes to Timeline Editor</button>
+        </div>
+
+        <a href="/auto_editor" class="back-link">⬅ Back to Timeline Editor</a>
+    </div>
+
+    <script>
+        let currentScenes = [];
+
+        async function generateScript() {
+            let promptText = document.getElementById('story-prompt').value;
+            if(!promptText.trim()) {
+                alert("⚠️ Please enter a prompt or text first!");
+                return;
+            }
+
+            event.target.innerText = "⏳ Generating with AI...";
+            
+            try {
+                let res = await fetch('/generate_story', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: promptText })
+                });
+                let data = await res.json();
+                
+                if(data.status === 'success') {
+                    currentScenes = data.scenes;
+                    renderScenes(currentScenes);
+                    document.getElementById('results-section').style.display = 'block';
+                }
+            } catch(e) {
+                alert("Error generating story.");
+            }
+            event.target.innerText = "⚡ Generate Story & Scene Breakdown";
+        }
+
+        function renderScenes(scenes) {
+            let container = document.getElementById('scenes-container');
+            container.innerHTML = '';
+            
+            scenes.forEach((scene, index) => {
+                let box = document.createElement('div');
+                box.className = 'scene-box';
+                box.innerHTML = `
+                    <div class="scene-title">🎬 Scene ${scene.scene_no} (Duration: ${scene.duration}s)</div>
+                    <div class="scene-text"><strong>🖼️ Visual Prompt:</strong> ${scene.visual}</div>
+                    <div class="scene-text"><strong>🎙️ Voiceover Script:</strong> "${scene.voiceover}"</div>
+                `;
+                container.appendChild(box);
+            });
+        }
+
+        function importToTimeline() {
+            alert("✅ Scenes ready to link with your AI Video Studio Timeline! (You can now map these prompts to your image generator or asset pool).");
+            window.location.href = '/auto_editor';
+        }
+    </script>
+</body>
+</html>
